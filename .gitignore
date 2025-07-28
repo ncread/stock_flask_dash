@@ -12,3 +12,4 @@ wheels/
 .ipynb_checkpoints/
 notes.txt
 stocks.ipynb
+functions.py
