@@ -8,5 +8,6 @@ dependencies = [
     "flask>=3.1.1",
     "pandas>=2.2.3",
     "plotly>=6.2.0",
+    "setuptools>=80.9.0",
     "yfinance>=0.2.61",
 ]
