@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Stock Information Overview</title>
+    <link rel="stylesheet" href="../static/styles.css">
+    <link href='https://fonts.googleapis.com/css?family=Roboto Mono' rel='stylesheet'>
+
+    <link rel="icon" type="image/png" href="../static/favicon/favicon-96x96.png" sizes="96x96" />
+    <link rel="icon" type="image/svg+xml" href="../static/favicon/favicon.svg" />
+    <link rel="shortcut icon" href="../static/favicon/favicon.ico" />
+    <link rel="apple-touch-icon" sizes="180x180" href="../static/favicon/apple-touch-icon.png" />
+    <link rel="manifest" href="../static/favicon/site.webmanifest" />
+
+    <!-- <script src="https://cdn.plot.ly/plotly-latest.min.js"></script> -->
+</head>
+<body>
+    <header class="header_container">
+        <div class="logo">
+            <a href="https://noahcread.com"><img src="../static/nrlogo2.png" alt="home"></a>
+        </div>
+    </header>
+
+
+    <div class="ticker_input_container">
+        <form class="input_form" method="POST">
+            <h1 for="tickers">Enter Stock Tickers (comma-separated):</h1>
+            <br>
+
+            <input type="text" id="tickers" name="tickers" placeholder="AAPL, ^GSPC, MSFT, NVDA, BTC-USD">
+            <br><br>
+
+            <div class="radio">
+                <div class="radio_container">
+                    <div class="radio_item">
+                        <label for="5d">5d</label>
+                        <input type="radio" name="radio_option" id="5d" value="5d">
+                    </div>
+                    <div class="radio_item">
+                        <label for="1mo">1mo</label>
+                        <input type="radio" name="radio_option" id="1mo" value="1mo">
+                    </div>
+                    <div class="radio_item">
+                        <label for="3mo">3mo</label>
+                        <input type="radio" name="radio_option" id="3mo" value="3mo">
+                    </div>
+                    <div class="radio_item">
+                        <label for="6mo">6mo</label>
+                        <input type="radio" name="radio_option" id="6mo" value="6mo">
+                    </div>
+                    <div class="radio_item">
+                        <label for="1y">1y</label>
+                        <input type="radio" name="radio_option" id="1y" value="1y" checked="checked">
+                    </div>
+                    <div class="radio_item">
+                        <label for="ytd">ytd</label>
+                        <input type="radio" name="radio_option" id="ytd" value="ytd">
+                    </div>
+                    <div class="radio_item">
+                        <label for="2y">2y</label>
+                        <input type="radio" name="radio_option" id="2y" value="2y">
+                    </div>
+                    <div class="radio_item">
+                        <label for="5y">5y</label>
+                        <input type="radio" name="radio_option" id="5y" value="5y">
+                    </div>
+                    <div class="radio_item">
+                        <label for="10y">10y</label>
+                        <input type="radio" name="radio_option" id="10y" value="10y">
+                    </div>
+                </div>
+            </div>
+            <br>
+            <button type="submit" name="submission_form" value="corr_form"> Go!</button>
+        </form>
+    </div>
+
+    
+    {% if tickers %}
+    <hr>
+        <div class="chosen_items">
+            <h4>Tickers: {{ tickers.upper() | replace(' ','') }}</h4>
+            <h4>Time period: {{ time_period }}</h4>
+        </div>
+        <hr>
+        <div class="resulting_content">
+                <div class="correlation_container">
+                    <h2>Correlation Matrix - Returns</h2>
+                    
+                    <!-- {% if tickers %}
+                        <h2>Correlation Matrix Components: {{ tickers }}</h2>
+                        <h3>Date Range Chosen:</h3>
+                        <h4>Today's date:</h4>
+                    {% endif %} -->
+                    <div class="corr_content">
+                        <div class="corr_plot">
+                            {{ corr_chart|safe }}
+                        </div>
+
+                        <!-- <h3>correlation explanation content</h3> -->
+                    </div>
+                </div>
+
+                <div class="metrics_container">
+                    <h2>Superfluous Metrics </h2>
+                    <table class="info_table">
+                        <thead>
+                            <tr>
+                                <th>Company</th>
+                                <th>Current Price Per Share ($)</th>
+                                <th>Beta <br>(5Y Monthly)</th>
+                                <th>Market Cap</th>
+                                <th>Trailing P/E</th>
+                                <th>Forward P/E</th>
+                                <th>Upcoming Earnings Date</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for key, value in metrics.items() %}
+                            <tr>
+                                <td>{{ key }}</td> <!-- company name -->
+                                <td>${{ value[0] }}</td> <!-- share price -->
+                                <td>{{ value[1] }}</td> <!-- beta -->
+                                <td>${{ value[2] }}</td> <!-- market cap -->
+
+                                {% if value[3] is not none %}
+                                    <td>${{ value[3] | round(2) }}</td> <!-- trailing earnings/share -->
+                                {% else %}
+                                    <td>{{ value[3] }}</td>
+                                {% endif %}
+
+                                {% if value[4] is not none %}
+                                    <td>${{ value[4] | round(2) }}</td> <!-- forward earnings/share -->
+                                {% else %}
+                                    <td>{{ value[4] }}</td>
+                                {% endif %}
+
+                                <td>{{ value[5] }}</td> <!-- earnings date -->
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+        </div>
+
+        <hr>
+
+        <div class="time_series_container">
+            <h2>Historical Pricing</h2>
+            <h3>Stock Price, Simple and Exponential Moving Averages, and Bollinger Bands</h3>
+            <!-- {{ time_series_fig|safe }} -->
+            <div class="time_series_plots">
+                {% for time_series_fig in time_series_list %}
+                    {{ time_series_fig | safe }}
+                    <hr>
+                {% endfor %}
+            </div>
+        </div>
+    {% endif %}
+
+    <div class="no_ticker_container">
+        <hr>
+        <h2>&#x2B07; Webpage Guidance &#x2B07;</h2>
+        <p>
+            After inserting <i>N</i> tickers and choosing a time period of interest, this web app will display a 
+            <b>correlation matrix (<i>NxN</i>)</b> showcasing how closely the returns of each asset correlate with one 
+            another throughout the chosen time period. Along with the matrix, a table of <b>relevant metrics</b> 
+            will tabulated, including each respective asset's current price per share, beta value, market cap, and upcoming earnings date.
+            <br><br>
+            And that's not all! Interactive <b>time series charts</b> for each inputted ticker will not only show its historical 
+            market price per share (if applicable), but numerous simple moving averages, exponential moving averages, and Bollinger Bands.
+            <br><br>
+            Although deeper pricing analysis tools are available elsewhere, this site strives to provide meaningful 
+            visualizations beyond simple asset prices, equipping users with information leading to sound portfolio
+            construction.
+            <br><br>
+            Take caution!! Occassionally the historical price charts will not fully render if a high number of tickers are inputted
+            at one time. If deep chart analysis will be occurring, ensure the chart is not fragmented.
+            <br><br>
+            Need inspiration? Check out the symbols available on <a href="https://finance.yahoo.com/markets/" target="_blank">Yahoo Finance</a>.
+        </p>
+    </div>
+
+    <footer>
+        <div class="copyright">
+            Copyright &copy; 2025 Noah Read
+        </div>
+    </footer>
+
+</body>
+</html>
