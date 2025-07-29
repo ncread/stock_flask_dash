@@ -115,7 +115,7 @@ def get_time_series(df, ticker, time_period):
     fig.update_layout(paper_bgcolor='rgb(184, 201, 223)')
     
     legend_names = ['Close', 'SMA10', 'SMA50', 'SMA200', 
-                    'EMA10', 'EMA50', 'EMA200', 'LowerBB', 'UpperBB']
+                    'EMA10', 'EMA50', 'EMA200', 'UpperBB', 'LowerBB']
     for trace, name in zip(fig.data, legend_names):
         trace.name = name
         trace.legendgroup = name
