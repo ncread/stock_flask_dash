@@ -78,70 +78,63 @@
 
     
     {% if tickers %}
-    <hr>
+        <hr>
         <div class="chosen_items">
             <h4>Tickers: {{ tickers.upper() | replace(' ','') }}</h4>
             <h4>Time period: {{ time_period }}</h4>
         </div>
         <hr>
         <div class="resulting_content">
-                <div class="correlation_container">
-                    <h2>Correlation Matrix - Returns</h2>
-                    
-                    <!-- {% if tickers %}
-                        <h2>Correlation Matrix Components: {{ tickers }}</h2>
-                        <h3>Date Range Chosen:</h3>
-                        <h4>Today's date:</h4>
-                    {% endif %} -->
-                    <div class="corr_content">
-                        <div class="corr_plot">
-                            {{ corr_chart|safe }}
-                        </div>
 
-                        <!-- <h3>correlation explanation content</h3> -->
+            <div class="correlation_container">
+                <h2>Correlation Matrix - Returns</h2>
+                <div class="corr_content">
+                    <div class="corr_plot">
+                        {{ corr_chart|safe }}
                     </div>
                 </div>
+            </div>
 
-                <div class="metrics_container">
-                    <h2>Superfluous Metrics </h2>
-                    <table class="info_table">
-                        <thead>
-                            <tr>
-                                <th>Company</th>
-                                <th>Current Price Per Share ($)</th>
-                                <th>Beta <br>(5Y Monthly)</th>
-                                <th>Market Cap</th>
-                                <th>Trailing P/E</th>
-                                <th>Forward P/E</th>
-                                <th>Upcoming Earnings Date</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for key, value in metrics.items() %}
-                            <tr>
-                                <td>{{ key }}</td> <!-- company name -->
-                                <td>${{ value[0] }}</td> <!-- share price -->
-                                <td>{{ value[1] }}</td> <!-- beta -->
-                                <td>${{ value[2] }}</td> <!-- market cap -->
+            <div class="metrics_container">
+                <h2>Superfluous Metrics</h2>
+                <table class="info_table">
+                    <thead>
+                        <tr>
+                            <th class="sticky_col"></th>
+                            <th>Current Price Per Share ($)</th>
+                            <th>Beta <br>(5Y Monthly)</th>
+                            <th>Market Cap</th>
+                            <th>Trailing P/E</th>
+                            <th>Forward P/E</th>
+                            <th>Upcoming Earnings Date</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for key, value in metrics.items() %}
+                        <tr>
+                            <td class="sticky_col">{{ key }}</td> <!-- company name -->
+                            <td>${{ value[0] }}</td> <!-- share price -->
+                            <td>{{ value[1] }}</td> <!-- beta -->
+                            <td>${{ value[2] }}</td> <!-- market cap -->
 
-                                {% if value[3] is not none %}
-                                    <td>${{ value[3] | round(2) }}</td> <!-- trailing earnings/share -->
-                                {% else %}
-                                    <td>{{ value[3] }}</td>
-                                {% endif %}
+                            {% if value[3] is not none %}
+                                <td>${{ value[3] | round(2) }}</td> <!-- trailing earnings/share -->
+                            {% else %}
+                                <td>{{ value[3] }}</td>
+                            {% endif %}
 
-                                {% if value[4] is not none %}
-                                    <td>${{ value[4] | round(2) }}</td> <!-- forward earnings/share -->
-                                {% else %}
-                                    <td>{{ value[4] }}</td>
-                                {% endif %}
+                            {% if value[4] is not none %}
+                                <td>${{ value[4] | round(2) }}</td> <!-- forward earnings/share -->
+                            {% else %}
+                                <td>{{ value[4] }}</td>
+                            {% endif %}
 
-                                <td>{{ value[5] }}</td> <!-- earnings date -->
-                            </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
-                </div>
+                            <td>{{ value[5] }}</td> <!-- earnings date -->
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
         </div>
 
         <hr>
@@ -170,13 +163,14 @@
             <br><br>
             And that's not all! Interactive <b>time series charts</b> for each inputted ticker will not only show its historical 
             market price per share (if applicable), but numerous simple moving averages, exponential moving averages, and Bollinger Bands.
+            On mobile devices, these will be easier to manipulate and analyze in landscape mode.
+            <br><br>
+            <b>Take caution!!</b> Occassionally the historical price charts will not fully render if a high number of tickers are inputted
+            at one time. If deep chart analysis will be occurring, ensure the chart is not fragmented.
             <br><br>
             Although deeper pricing analysis tools are available elsewhere, this site strives to provide meaningful 
             visualizations beyond simple asset prices, equipping users with information leading to sound portfolio
             construction.
-            <br><br>
-            Take caution!! Occassionally the historical price charts will not fully render if a high number of tickers are inputted
-            at one time. If deep chart analysis will be occurring, ensure the chart is not fragmented.
             <br><br>
             Need inspiration? Check out the symbols available on <a href="https://finance.yahoo.com/markets/" target="_blank">Yahoo Finance</a>.
         </p>

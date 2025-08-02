@@ -1,7 +1,11 @@
-from flask import Flask, request, render_template
+from flask import Flask, request, render_template, jsonify
 from get_data import *
 
 app = Flask(__name__)
+
+@app.route('/healthz', methods = ['GET'])
+def site_health_check():
+    return jsonify({'status':'healthy'}), 200
 
 @app.route('/', methods = ['GET','POST'])
 def index():

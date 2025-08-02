@@ -55,8 +55,8 @@ def generate_corr_plot(ticker_list, time_period_corr):
     fig = px.imshow(corr_matrix, text_auto=True,
                     color_continuous_scale='RdBu_r', zmin=-1, zmax=1,
                     title=f'Correlation: Historical Return ({time_period_corr})')
-    fig.update_layout(height=600,width=600,paper_bgcolor='rgb(184, 201, 223)', coloraxis_colorbar = dict(x=1.1),
-                      margin = dict(r=0))
+    fig.update_layout(paper_bgcolor='rgb(184, 201, 223)', coloraxis_colorbar = dict(x=1.0),
+                      autosize=True, xaxis_title=None, yaxis_title=None, margin=dict(r=0))
     corr_plot = plotly.io.to_html(fig, full_html=False)
     return corr_plot
 
