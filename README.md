@@ -11,6 +11,6 @@ If applicable, any chosen public company will also have their upcoming earnings 
 
 This project utilized Python, specifically the Yahoo Finance and Plotly Express packages. Flask is the framework, with structure and styling constructed with HTML and CSS. 
 
-Down the line, the plan is try out Vercel for the first time to host this project, and have my noahcread.com website to include a link to the web app.
+The initial plan was to try out Vercel for the first time to host this project, yet I came across a few pitfalls related to the storage size of the entire application (including dependencies). I wasn't able to reduce the storage size of the app enough to fit within the 250 MB requirements, so Render was utilized instead of Vercel. Along with UptimeRobot to avoid cold starts by the Render server, the free tier of Render is perfectly suitable. Knowing a little more about what Vercel expects will be helpful for future projects down the line.
 
 Thanks for reading, and enjoy. Please feel free to reach out with thoughts or improvements.
