@@ -35,8 +35,7 @@ def index():
                 for stock in ticker_list:
                     time_series_list.append(get_time_series(df, stock, time_period))
             except Exception as e:
-                # corr_chart_html = f'<p>Error fetching data. Please check the inputted tickers and try again.</p>'
-                corr_chart_html = e
+                corr_chart_html = f'<p>Error fetching data. Please check the inputted tickers and try again.</p>'
                 metrics = {}
     
     return render_template('index.html', corr_chart=corr_chart_html, 
