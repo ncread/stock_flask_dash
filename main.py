@@ -1,4 +1,5 @@
 from flask import Flask, request, render_template, jsonify
+import time
 from get_data import *
 
 app = Flask(__name__)
@@ -26,17 +27,20 @@ def index():
 
             ticker_list = [t.strip().upper() for t in tickers.split(",") if t.strip()]
 
-            try:
-                corr_chart_html = generate_corr_plot(ticker_list, time_period)
+            for i in range(3):
+                try:
+                    corr_chart_html = generate_corr_plot(ticker_list, time_period)
 
-                metrics = get_metrics(ticker_list)
-                
-                df = get_historical_data(ticker_list, time_period)
-                for stock in ticker_list:
-                    time_series_list.append(get_time_series(df, stock, time_period))
-            except Exception as e:
-                corr_chart_html = f'<p>Error fetching data. Please check the inputted tickers and try again.</p>'
-                metrics = {}
+                    metrics = get_metrics(ticker_list)
+                    
+                    df = get_historical_data(ticker_list, time_period)
+                    for stock in ticker_list:
+                        time_series_list.append(get_time_series(df, stock, time_period))
+                    break
+                except Exception as e:
+                    corr_chart_html = f'<p>Error fetching data from Yahoo Finance. Please try again.</p>'
+                    metrics = {}
+                    time.sleep(2)
     
     return render_template('index.html', corr_chart=corr_chart_html, 
                            hist_fig=hist_fig_html, tickers=tickers, 
