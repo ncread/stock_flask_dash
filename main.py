@@ -27,7 +27,10 @@ def index():
 
             ticker_list = [t.strip().upper() for t in tickers.split(",") if t.strip()]
 
-            for i in range(3):
+            ###call a function here that outputs a dataframe that the other functions
+            #can pull from to avoid using yf numerous times
+
+            for _ in range(3):
                 try:
                     corr_chart_html = generate_corr_plot(ticker_list, time_period)
 

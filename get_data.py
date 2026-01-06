@@ -1,7 +1,8 @@
-import pandas as pd
 import yfinance as yf
+import pandas as pd
 import plotly
 import plotly.express as px
+import requests
 
 ############################################
 def get_historical_data(tickers, time_period):
@@ -9,9 +10,14 @@ def get_historical_data(tickers, time_period):
             1d, 5d, 1mo, 3mo, 6mo, 1y, 2y, 5y, 10y, ytd, max, etc
         output: dataframe with yfinance historical data
     '''
+
+    session = requests.Session()
+    session.headers.update({'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'})
+
+
     tickers = [i.upper() for i in tickers]
 
-    df = yf.download(tickers, period=time_period)
+    df = yf.download(tickers, period=time_period, session=session)
 
     for stock in tickers:
         #daily change
@@ -27,7 +33,7 @@ def get_historical_data(tickers, time_period):
         #Bollinger bands: 2 std devs above&below 20 day SMA
         df[('UpperBB', stock)] = df[('Close', stock)].rolling(window=20).mean() + (df[('Close', stock)].rolling(20).std() * 2)
         df[('LowerBB', stock)] = df[('Close', stock)].rolling(window=20).mean() - (df[('Close', stock)].rolling(20).std() * 2)
-        
+    
     return df
 
 #############################################
