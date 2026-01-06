@@ -16,10 +16,14 @@ def get_historical_data(tickers, time_period):
 
 
     tickers = [i.upper() for i in tickers]
-
-    df = yf.download(tickers, period=time_period, session=session)
+    frames = []
+    # df = yf.download(tickers, period=time_period)
 
     for stock in tickers:
+        t = yf.Ticker(stock, session=session)
+        df = t.history(period=time_period, auto_adjust=False)
+        df.columns = pd.MultiIndex.from_product([df.columns, [stock]])
+
         #daily change
         df[('Delta', stock)] = df[('Close', stock)].pct_change()
         #simple moving average (10,50,200 day)
@@ -33,8 +37,9 @@ def get_historical_data(tickers, time_period):
         #Bollinger bands: 2 std devs above&below 20 day SMA
         df[('UpperBB', stock)] = df[('Close', stock)].rolling(window=20).mean() + (df[('Close', stock)].rolling(20).std() * 2)
         df[('LowerBB', stock)] = df[('Close', stock)].rolling(window=20).mean() - (df[('Close', stock)].rolling(20).std() * 2)
-    
-    return df
+
+        frames.append(df)
+    return pd.concat(frames, axis=1).sort_index(axis=1)
 
 #############################################
 def create_returns(dataframe):
@@ -48,12 +53,13 @@ def create_returns(dataframe):
     return returns_df
 
 #############################################
-def generate_corr_plot(ticker_list, time_period_corr):
+def generate_corr_plot(df, ticker_list, time_period_corr):
     '''
         input: list of tickers, time period
         output: correlation matrix plot to be passed to html
     '''
-    data = yf.download(ticker_list, period=time_period_corr)['Close']
+    # data = yf.download(ticker_list, period=time_period_corr)['Close']
+    data = df['Close']
     data.dropna(axis=1, how='all', inplace=True)
     returns = data.pct_change().dropna()
     corr_matrix = returns.corr()

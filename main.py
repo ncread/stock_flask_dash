@@ -32,16 +32,19 @@ def index():
 
             for _ in range(3):
                 try:
-                    corr_chart_html = generate_corr_plot(ticker_list, time_period)
+                    df = get_historical_data(ticker_list, time_period)
 
                     metrics = get_metrics(ticker_list)
+
+                    corr_chart_html = generate_corr_plot(df, ticker_list, time_period)
                     
-                    df = get_historical_data(ticker_list, time_period)
+                    
                     for stock in ticker_list:
                         time_series_list.append(get_time_series(df, stock, time_period))
                     break
                 except Exception as e:
-                    corr_chart_html = f'<p>Error fetching data from Yahoo Finance. Please try again.</p>'
+                    # corr_chart_html = f'<p>Error fetching data from Yahoo Finance. Please try again.</p>'
+                    corr_chart_html = f'{e}'
                     metrics = {}
                     time.sleep(2)
     
