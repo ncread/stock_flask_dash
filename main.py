@@ -54,4 +54,4 @@ def index():
                            time_series_list=time_series_list)
 
 if __name__ == '__main__':
-    app.run()
+    app.run(debug=True)

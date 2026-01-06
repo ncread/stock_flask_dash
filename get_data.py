@@ -3,24 +3,31 @@ import pandas as pd
 import plotly
 import plotly.express as px
 import requests
+from curl_cffi import requests as cffi_requests
 
-############################################
+############################################  
 def get_historical_data(tickers, time_period):
     ''' input: list of stock tickers and (yfinance supported) time period string
             1d, 5d, 1mo, 3mo, 6mo, 1y, 2y, 5y, 10y, ytd, max, etc
         output: dataframe with yfinance historical data
     '''
 
-    session = requests.Session()
-    session.headers.update({'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'})
-
+    # session = cffi_requests.Session(
+    #     headers={
+    #         "User-Agent": (
+    #             "Mozilla/5.0 (X11; Linux x86_64) "
+    #             "AppleWebKit/537.36 (KHTML, like Gecko) "
+    #             "Chrome/120.0.0.0 Safari/537.36"
+    #         )
+    #     }
+    # )
 
     tickers = [i.upper() for i in tickers]
     frames = []
     # df = yf.download(tickers, period=time_period)
 
     for stock in tickers:
-        t = yf.Ticker(stock, session=session)
+        t = yf.Ticker(stock)
         df = t.history(period=time_period, auto_adjust=False)
         df.columns = pd.MultiIndex.from_product([df.columns, [stock]])
 
@@ -139,6 +146,6 @@ def get_time_series(df, ticker, time_period):
     time_series_plot = plotly.io.to_html(fig, full_html=False)
     return time_series_plot
 
-
+# print(get_historical_data('nvda','1y'))
 if __name__ == '__main__':
     pass
