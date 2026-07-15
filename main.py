@@ -28,24 +28,23 @@ def index():
 
             ticker_list = [t.strip().upper() for t in tickers.split(",") if t.strip()]
 
-            for _ in range(2):
-                try:
-                    ticker_tuple = tuple(ticker_list) #necessary for lru_cache
-                    df = get_historical_data(ticker_tuple, time_period)
+            try:
+                ticker_tuple = tuple(ticker_list) #necessary for lru_cache
+                df = get_historical_data(ticker_tuple, time_period)
 
-                    metrics = get_metrics(ticker_tuple)
+                metrics = get_metrics(ticker_tuple)
 
-                    corr_chart_html = generate_corr_plot(df, time_period)
-                    
-                    for stock in ticker_list:
-                        time_series_list.append(get_time_series(df, stock, time_period))
-                    time.sleep(2)
-                    break
-                except Exception as e:
-                    # corr_chart_html = f'<p>Error fetching data from Yahoo Finance. Please try again.</p>'
-                    corr_chart_html = f'{e}'
-                    metrics = {}
-                    time.sleep(2)
+                corr_chart_html = generate_corr_plot(df, time_period)
+                
+                for stock in ticker_list:
+                    time_series_list.append(get_time_series(df, stock, time_period))
+                time.sleep(3)
+
+            except Exception as e:
+                # corr_chart_html = f'<p>Error fetching data from Yahoo Finance. Please try again.</p>'
+                corr_chart_html = f'{e}'
+                metrics = {}
+                time.sleep(2)
     
     return render_template('index.html', corr_chart=corr_chart_html, 
                            hist_fig=hist_fig_html, tickers=tickers, 

@@ -53,10 +53,10 @@ def create_returns(dataframe: pd.DataFrame) -> pd.DataFrame:
 
 def generate_corr_plot(df: pd.DataFrame, time_period_corr: str):
     '''
-        input: list of tickers, time period
+        input: dataframe w/ yfinance data, time period
         output: correlation matrix plot to be passed to html
     '''
-    # data = yf.download(ticker_list, period=time_period_corr)['Close']
+    
     data = df['Close']
     data.dropna(axis=1, how='all', inplace=True)
     returns = data.pct_change().dropna()
@@ -74,7 +74,7 @@ def generate_corr_plot(df: pd.DataFrame, time_period_corr: str):
 @lru_cache(maxsize=128)
 def get_metrics(tickers_tuple: tuple) -> dict:
     '''
-        input: list of tickers
+        input: ticker tuple
         output: dictionary w/ tickers as keys, list of metrics as corresponding values
     '''
     # metrics_info = ['currentPrice','beta','marketCap']
