@@ -11,7 +11,7 @@ FINNHUB_API_KEY = os.getenv('FINNHUB_API_KEY')
 client = finnhub.Client(api_key=FINNHUB_API_KEY)
 
 
-def get_finnhub_price(client, ticker: str):
+def get_finnhub_price(ticker: str):
     features = {}
     quote = client.quote(ticker)
     features['price'] = quote['c']
@@ -20,7 +20,7 @@ def get_finnhub_price(client, ticker: str):
 
     return features
 
-def get_finnhub_metrics(client, ticker: str) -> dict:
+def get_finnhub_metrics(ticker: str) -> dict:
     '''
     Extracts forward PE ratio, forward PEG ratio, PE TTM (trailing 12 months), PEG TTM
     inputs: Finnhub client connection, ticker
@@ -34,10 +34,10 @@ def get_finnhub_metrics(client, ticker: str) -> dict:
     for metric in fh_metrics:
         fh_results[metric] = fh_data.get(metric)
 
-    return fh_data
+    return fh_results
 
 
-def get_finnhub_earnings(client, ticker: str):
+def get_finnhub_earnings(ticker: str):
     '''
     Extracts the upcoming earnings information for the next 90 days and grabs the next earnings date, if it's before open or after close, and the estimated earnings per share
     inputs: Finnhub client connection, ticker
@@ -53,6 +53,3 @@ def get_finnhub_earnings(client, ticker: str):
     fh_earnings = data['earningsCalendar'][0]
 
     return {metric:value for metric,value in fh_earnings.items() if metric in fh_metrics}
-
-print(get_finnhub_price(client, 'SW'))
-print(get_finnhub_price(client, 'RGTI'))

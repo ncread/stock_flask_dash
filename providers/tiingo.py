@@ -31,4 +31,4 @@ def calculate_features(prices_json: dict) -> pd.DataFrame:
     pass
 
 
-# print(get_prices('NVDA')) #with no date arguments, you get the most recent day of info
+# print(get_prices('NVDA')) #with no date arguments, you get just the most recent day of info

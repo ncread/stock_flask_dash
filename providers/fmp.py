@@ -26,7 +26,7 @@ def format_metric(metric: int) -> str:
         return str(metric)
 
 
-def get_fmp_profile(session, ticker: str, apikey: str):
+def get_fmp_profile(ticker: str):
     '''
     Hits the /profile FMP endpoint for full company name, current price, market cap, and beta features
     inputs: requests session, ticker, FMP api key
@@ -38,7 +38,7 @@ def get_fmp_profile(session, ticker: str, apikey: str):
     fmp_profile_metrics = ['companyName','marketCap','beta','range','averageVolume']
     profile_url = 'https://financialmodelingprep.com/stable/profile'
     params = {'symbol': ticker,
-              'apikey': apikey}
+              'apikey': FMP_API_KEY}
     profile_response = session.get(profile_url, params=params)
     profile_data = profile_response.json()[0]
 
