@@ -1,4 +1,5 @@
 import os
+import json
 import boto3
 from datetime import datetime, timedelta, timezone
 from dotenv import load_dotenv
@@ -23,31 +24,42 @@ s3 = boto3.client(
 
 
 ticker_list = ['NVDA','AAPL','RGTI']
-yesterday = (datetime.now() - timedelta(hours=24))
+yesterday = (datetime.now(timezone.utc) - timedelta(hours=24))
 
-def get_features(ticker):
+def get_features(ticker, bucket):
+    ticker = ticker.upper()
     if ticker in feature_cache: #if in cache, return contents
         print(f'Features for {ticker} present in cache.')
         return feature_cache[ticker]
     
     print(f'Features for {ticker} not present in cache.')
 
-    exists, mod_date = check_file_in_bucket('stocks-r2', 'features', ticker, 'json')
+    #check cloud bucket
+    exists, mod_date = check_file_in_bucket(bucket, 'features', ticker, 'json')
 
     if exists and mod_date >= yesterday:
         print('File exists in cloud and has been updated in the past 24 hrs. Loading it now...')
         #load from R2
-        #save to cache
+        response = s3.get_object(Bucket=bucket, Key=f'features/{ticker}.json')
+        features = json.loads(response['Body'].read().decode('utf-8'))
+        feature_cache[ticker] = features
+        print(f'{ticker}.json pulled from cloud and added to cache')
+        return features
     else:
-        print('File is either outdated or not present. Fetching new data...')
+        print(f'File is either outdated or not present. Fetching new features data for {ticker}...')
         fh_metrics = fh.get_finnhub_metrics(ticker)
         fh_earnings = fh.get_finnhub_earnings(ticker)
         fmp_metrics = fmp.get_fmp_profile(ticker)
-        metrics = fh_metrics | fh_earnings | fmp_metrics
-        #save to R2 
-        # feature_cache[ticker] = metrics #save to cache
+        fresh_metrics = fh_metrics | fh_earnings | fmp_metrics
+        print(f'{ticker} data successfully obtained')
+        s3.put_object(Bucket=bucket, Key=f'features/{ticker}.json', Body=json.dumps(fresh_metrics), ContentType='application/json')
+        feature_cache[ticker] = fresh_metrics
+        print(f'Features for {ticker} successfully saved to cloud and cache')
+        return fresh_metrics
 
-
+def get_prices():
+    #this function needs to incorporate the time aspect, checking the most recent price date of the content within the bucket parquet file and only pulling the missing info, then adding that info to the parquet file. But also, the user inputs a time period, so based on that input, the output contains only the time range specified.
+    pass
 
 
 
@@ -66,7 +78,7 @@ def check_file_in_bucket(bucket, key, ticker, file_type):
     except ClientError as e:
         error_code = e.response['Error']['Code']
         if error_code == '404':
-            print(f'Error: {ticker}.parquet not found')
+            print(f'Error: {ticker}.parquet not found in R2')
         elif error_code == '403':
             print('Error: Access denied')
         else:
@@ -82,3 +94,10 @@ def check_file_in_bucket(bucket, key, ticker, file_type):
 #         # need to transform json to parquet here, then return it
 #     elif check_bucket(bucket, ticker, 'historical_price') < yesterday:
 #         price_json = tiingo.get_prices(ticker, yesterday)
+
+print('NVDA Run 1')
+print(get_features('NVDA', 'stocks-r2'))
+print('NVDA Run 2')
+print(get_features('NVDA', 'stocks-r2'))
+print('AAPL Run')
+print(get_features('AAPL', 'stocks-r2'))
