@@ -28,7 +28,21 @@ def get_prices(ticker: str, start_date=None, end_date=None) -> dict:
 
 def calculate_features(prices_json: dict) -> pd.DataFrame:
     '''do the SMA, EMA, BB calcs here'''
-    pass
+    df = pd.DataFrame(prices_json)
+
+    #simple moving average
+    df['SMA10'] = df['adjClose'].rolling(window=10).mean()
+    df['SMA50'] = df['adjClose'].rolling(window=50).mean()
+    df['SMA200'] = df['adjClose'].rolling(window=200).mean()
+    #exponential moving average (more weight to recent prices)
+    df['EMA10'] = df['adjClose'].ewm(span=10).mean()
+    df['EMA50'] = df['adjClose'].ewm(span=50).mean()
+    df['EMA200'] = df['adjClose'].ewm(span=200).mean()
+    #Bollinger bands: 2 std devs above&below 20 day SMA
+    df['UpperBB'] = df['adjClose'].rolling(window=20).mean() + (df['adjClose'].rolling(20).std() * 2)
+    df['LowerBB'] = df['adjClose'].rolling(window=20).mean() - (df['adjClose'].rolling(20).std() * 2)
+
+    return df
 
 
-# print(get_prices('NVDA')) #with no date arguments, you get just the most recent day of info
+# a = get_prices('NVDA', start_date='2026-06-27') #with no date arguments, you get just the most recent day of info
