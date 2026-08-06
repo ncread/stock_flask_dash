@@ -23,7 +23,13 @@ def get_prices(ticker: str, start_date=None, end_date=None) -> dict:
         params['endDate'] = end_date
     
     response = session.get(url, params=params)
-    return response.json()
+    df = calculate_features(response.json())
+
+    cols = ['date','adjClose','adjHigh','adjLow','adjOpen','adjVolume','SMA10','SMA50','SMA200','EMA10','EMA50','EMA200','UpperBB','LowerBB']
+
+    df = df[cols]
+
+    return df
 
 
 def calculate_features(prices_json: dict) -> pd.DataFrame:
@@ -42,7 +48,9 @@ def calculate_features(prices_json: dict) -> pd.DataFrame:
     df['UpperBB'] = df['adjClose'].rolling(window=20).mean() + (df['adjClose'].rolling(20).std() * 2)
     df['LowerBB'] = df['adjClose'].rolling(window=20).mean() - (df['adjClose'].rolling(20).std() * 2)
 
+    df['date'] = pd.to_datetime(df['date']).dt.date
     return df
 
 
-# a = get_prices('NVDA', start_date='2026-06-27') #with no date arguments, you get just the most recent day of info
+# a = get_prices('AAPL', start_date='2026-07-27') #with no date arguments, you get just the most recent day of info
+# print(a)
