@@ -37,6 +37,7 @@ time_lookup = {'5d': 5,
 
 ticker_list = ['NVDA','AAPL','RGTI']
 yesterday = (datetime.now(timezone.utc) - timedelta(hours=24))
+time_minus_twelve = (datetime.now(timezone.utc) - timedelta(hours=12))
 
 def get_features(ticker, bucket):
     ticker = ticker.upper()
@@ -76,42 +77,58 @@ def get_prices(ticker, bucket, time_period):
 
     if ticker in price_cache:
         print(f'Historical prices for {ticker} present in cache')
-        return price_cache[ticker].iloc[-(time_lookup[time_period]):]
+        df = price_cache[ticker]
+        cutoff_date = df['date'].max() - timedelta(days=time_lookup[time_period]+1)
+        return df[df['date'] >= cutoff_date]
 
     print(f'Historical prices for {ticker} NOT present in cache')
 
     #check cloud bucket
     exists, mod_date = check_file_in_bucket(bucket, 'prices', ticker, 'parquet')
 
-    if exists and mod_date >= yesterday: #prices are updated as 
-        print('File exists in cloud and has been updated in the past 24 hrs. Loading it now...')
+    if exists and mod_date >= time_minus_twelve:
+        print('File exists in cloud and has been updated in the past 12 hrs. Loading it now...')
         #load from R2
         df = storage.load_parquet(f'prices/{ticker}.parquet', s3, bucket)
         price_cache[ticker] = df
         print(f'{ticker}.parquet pulled from cloud and added to cache')
-        return df.iloc[-(time_lookup[time_period]):]
+
+        cutoff_date = df['date'].max() - timedelta(days=time_lookup[time_period]+1)
+        return df[df['date'] >= cutoff_date]
 
     elif not exists:
         print(f'No parquet file exists for {ticker}. Fetching full price history now...')
-        df = tiingo.get_prices(ticker, start_date='1900-01-01')
+        df = tiingo.get_prices(ticker, start_date='1980-01-01')
         price_cache[ticker] = df
         storage.save_parquet(df, f'prices/{ticker}.parquet', s3, bucket)
-        return df.iloc[-(time_lookup[time_period]):]
+        print(f'Full pricing history saved for {ticker}')
+
+        cutoff_date = df['date'].max() - timedelta(days=time_lookup[time_period]+1)
+        return df[df['date'] >= cutoff_date]
     
     else:
+        print(f'File for {ticker} is out of date. Updating the price history now...', end='')
         stored_daily_prices = storage.load_parquet(f'prices/{ticker}.parquet', s3, bucket)
+        start_idx = len(stored_daily_prices) -1
         latest_date = stored_daily_prices['date'].max()
-        print(f'Updated through {latest_date}. Fetching most recent prices...')
-        new_daily_prices = tiingo.get_prices(ticker, start_date=latest_date+timedelta(hours=24))
 
-        updated_df = pd.concat(stored_daily_prices, new_daily_prices)
+        new_daily_prices = tiingo.get_prices(ticker, start_date=latest_date+timedelta(hours=24))
+        new_latest_date = new_daily_prices['date'].max()
+        print(f'Prices were saved through {latest_date}...Now updated through {new_latest_date}')
+
+        updated_df = pd.concat([stored_daily_prices, new_daily_prices], ignore_index=True)
+        updated_df = tiingo.compute_appended_features(updated_df, start_idx)
         price_cache[ticker] = updated_df
         storage.save_parquet(updated_df, f'prices/{ticker}.parquet', s3, bucket)
         print(f'Fetched updated prices, appended dataframe, saved to cloud and cache')
-        return updated_df.iloc[-(time_lookup[time_period]):]
 
+        cutoff_date = df['date'].max() - timedelta(days=time_lookup[time_period]+1)
+        return df[df['date'] >= cutoff_date]
 
-
+# a = storage.load_parquet(f'prices/AAPL.parquet', s3, 'stocks-r2')
+# df_a = a.iloc[:-1]
+# print(df_a.tail())
+# storage.save_parquet(df_a, f'prices/AAPL.parquet', s3, 'stocks-r2')
 
 ###BUCKET FUNCTIONS------
 # def push_to_bucket(bucket: str, ticker: str, key: str):
@@ -147,4 +164,6 @@ def check_file_in_bucket(bucket, key, ticker, file_type):
 
 # print('NVDA Run 1')
 # print(get_features('NVDA', 'stocks-r2'))
-print(get_prices('AAPL', 'stocks-r2', '1mo'))
+# print(get_prices('IBM', 'stocks-r2', '1mo'))
+
+
