@@ -1,6 +1,7 @@
 from flask import Flask, request, render_template, jsonify
 import time
-from get_data import *
+import get_data
+import web_content
 
 
 app = Flask(__name__)
@@ -23,28 +24,28 @@ def index():
     if request.method == 'POST':
 
         if 'submission_form' in request.form:
-            tickers = request.form['tickers']
+            tickers_response = request.form['tickers']
             time_period = request.form['radio_option']
 
-            ticker_list = [t.strip().upper() for t in tickers.split(",") if t.strip()]
+            tickers = [t.strip().upper() for t in tickers_response.split(",") if t.strip()]
 
-            try:
-                ticker_tuple = tuple(ticker_list) #necessary for lru_cache
-                df = get_historical_data(ticker_tuple, time_period)
+            for _ in range(2):
+                try:
+                    df = web_content.combine_historical_data(tickers, time_period)
 
-                metrics = get_metrics(ticker_tuple)
+                    metrics = web_content.combine_metrics(tickers)
 
-                corr_chart_html = generate_corr_plot(df, time_period)
-                
-                for stock in ticker_list:
-                    time_series_list.append(get_time_series(df, stock, time_period))
-                time.sleep(3)
-
-            except Exception as e:
-                # corr_chart_html = f'<p>Error fetching data from Yahoo Finance. Please try again.</p>'
-                corr_chart_html = f'{e}'
-                metrics = {}
-                time.sleep(2)
+                    corr_chart_html = web_content.get_corr_plot(df, time_period)
+                    
+                    for ticker in tickers:
+                        time_series_list.append(web_content.get_time_series(df, ticker, time_period))
+                    time.sleep(2)
+                    break
+                except Exception as e:
+                    # corr_chart_html = f'<p>Error fetching data from Yahoo Finance. Please try again.</p>'
+                    corr_chart_html = f'{e}'
+                    metrics = {}
+                    time.sleep(2)
     
     return render_template('index.html', corr_chart=corr_chart_html, 
                            hist_fig=hist_fig_html, tickers=tickers, 
@@ -52,4 +53,4 @@ def index():
                            time_series_list=time_series_list)
 
 if __name__ == '__main__':
-    app.run()
+    app.run(debug=True)

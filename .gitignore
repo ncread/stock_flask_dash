@@ -9,11 +9,16 @@ wheels/
 # Virtual environments
 .venv
 
+# Environment variables
+.env
+
+# Misc
 .ipynb_checkpoints/
 notes.txt
 stocks.ipynb
 functions.py
-test.py
+prac.py
+deprecated/
 
 static/deprec_styles.css
 templates/deprec_index.html

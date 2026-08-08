@@ -6,10 +6,14 @@ readme = "README.md"
 requires-python = ">=3.10"
 dependencies = [
     "appdirs>=1.4.4",
+    "boto3>=1.43.51",
+    "cachetools>=7.1.4",
+    "dotenv>=0.9.9",
     "flask>=3.1.1",
     "gunicorn>=25.0.0",
     "pandas>=2.2.3",
     "plotly>=6.2.0",
+    "pyarrow>=25.0.0",
+    "requests>=2.32.5",
     "setuptools>=80.9.0",
-    "yfinance>=0.2.66",
 ]

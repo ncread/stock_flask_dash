@@ -1,149 +1,123 @@
-import yfinance as yf
+import json
 import pandas as pd
-import plotly
-import plotly.express as px
-from functools import lru_cache
+from datetime import date, datetime, timedelta, timezone
+
+#other files
+from providers import fh, fmp, tiingo
+import storage
+from cache import price_cache, feature_cache
 
 
-@lru_cache(maxsize=128)
-def get_historical_data(tickers_tuple: tuple, time_period: str) -> pd.DataFrame:
-    ''' 
-        input: tuple of stock tickers and (yfinance supported) time period string
-            1d, 5d, 1mo, 3mo, 6mo, 1y, 2y, 5y, 10y, ytd, max, etc
-        output: dataframe with yfinance historical data
-    '''
 
-    tickers = [i.upper() for i in tickers_tuple]
-    frames = []
-    # df = yf.download(tickers, period=time_period)
+#fix this, it counts these as market open days, so 1mo will include 30 market days, which is about a month and a half
+time_lookup = {'5d': 5, 
+               '1mo': 30, 
+               '3mo': 90, 
+               '6mo': 182, 
+               '1y': 365, 
+               'ytd': date.today().timetuple().tm_yday, 
+               '2y': 730, 
+               '5y': 1825, 
+               '10y': 3650}
 
-    for stock in tickers:
-        t = yf.Ticker(stock)
-        df = t.history(period=time_period, auto_adjust=False)
-        df.columns = pd.MultiIndex.from_product([df.columns, [stock]])
-
-        #daily change
-        df[('Delta', stock)] = df[('Close', stock)].pct_change()
-        #simple moving average (10,50,200 day)
-        df[('SMA10', stock)] = df[('Close', stock)].rolling(window=10).mean()
-        df[('SMA50', stock)] = df[('Close', stock)].rolling(window=50).mean()
-        df[('SMA200', stock)] = df[('Close', stock)].rolling(window=200).mean()
-        #exponential moving average (more weight to recent prices)
-        df[('EMA10', stock)] = df[('Close', stock)].ewm(span=10).mean()
-        df[('EMA50', stock)] = df[('Close', stock)].ewm(span=50).mean()
-        df[('EMA200', stock)] = df[('Close', stock)].ewm(span=200).mean()
-        #Bollinger bands: 2 std devs above&below 20 day SMA
-        df[('UpperBB', stock)] = df[('Close', stock)].rolling(window=20).mean() + (df[('Close', stock)].rolling(20).std() * 2)
-        df[('LowerBB', stock)] = df[('Close', stock)].rolling(window=20).mean() - (df[('Close', stock)].rolling(20).std() * 2)
-
-        frames.append(df)
-    return pd.concat(frames, axis=1).sort_index(axis=1)
+yesterday = (datetime.now(timezone.utc) - timedelta(hours=24))
+time_minus_twelve = (datetime.now(timezone.utc) - timedelta(hours=12))
 
 
-def create_returns(dataframe: pd.DataFrame) -> pd.DataFrame:
-    '''
-        input: output from get_historical_data function, grabs the Delta columns to create returns
-        output: dataframe with time series returns
-    '''
-    chosen_stocks = dataframe.columns.get_level_values(1).unique()
-    returns_list = [dataframe['Delta'][stock].rename(stock) for stock in chosen_stocks]
-    returns_df = pd.concat(returns_list, axis=1)
-    return returns_df
+def get_features(ticker: str, bucket: str) -> dict:
 
-
-def generate_corr_plot(df: pd.DataFrame, time_period_corr: str):
-    '''
-        input: dataframe w/ yfinance data, time period
-        output: correlation matrix plot to be passed to html
-    '''
+    ticker = ticker.upper()
+    if ticker in feature_cache: #if in cache, return contents
+        print(f'Features for {ticker} present in cache')
+        return feature_cache[ticker]
     
-    data = df['Close']
-    data.dropna(axis=1, how='all', inplace=True)
-    returns = data.pct_change().dropna()
-    corr_matrix = returns.corr()
+    print(f'Features for {ticker} NOT present in cache')
 
-    fig = px.imshow(corr_matrix, text_auto=True,
-                    color_continuous_scale='RdBu_r', zmin=-1, zmax=1,
-                    title=f'Correlation: Historical Return ({time_period_corr})')
-    fig.update_layout(paper_bgcolor='rgb(184, 201, 223)', coloraxis_colorbar = dict(x=1.0),
-                      autosize=True, xaxis_title=None, yaxis_title=None, margin=dict(r=0))
-    corr_plot = plotly.io.to_html(fig, full_html=False)
-    return corr_plot
+    #check cloud bucket
+    exists, mod_date = storage.check_file_in_bucket(bucket, 'features', ticker, 'json')
+
+    if exists and mod_date >= yesterday:
+        print('File exists in cloud and has been updated in the past 24 hrs. Loading it now...')
+        #load from R2
+        # response = s3.get_object(Bucket=bucket, Key=f'features/{ticker}.json')
+        # metrics = json.loads(response['Body'].read().decode('utf-8'))
+        metrics = storage.load_json(bucket, f'features/{ticker}.json')
+        feature_cache[ticker] = metrics
+        print(f'{ticker}.json pulled from cloud and added to cache')
+        return {ticker: metrics}
+    else:
+        print(f'File is either outdated or not present. Fetching new features data for {ticker}...')
+        fh_metrics = fh.get_finnhub_metrics(ticker)
+        fh_earnings = fh.get_finnhub_earnings(ticker)
+        fmp_metrics = fmp.get_fmp_profile(ticker)
+        fresh_metrics = fh_metrics | fh_earnings | fmp_metrics
+        print(f'{ticker} data successfully obtained')
+        # s3.put_object(Bucket=bucket, Key=f'features/{ticker}.json', Body=json.dumps(fresh_metrics), ContentType='application/json')
+        storage.save_json(bucket, f'features/{ticker}.json', json.dumps(fresh_metrics))
+        feature_cache[ticker] = fresh_metrics
+        print(f'Features for {ticker} successfully saved to cloud and cache')
+        return {ticker: fresh_metrics}
 
 
-@lru_cache(maxsize=128)
-def get_metrics(tickers_tuple: tuple) -> dict:
+def get_prices(ticker: str, bucket: str, time_period: str):
     '''
-        input: ticker tuple
-        output: dictionary w/ tickers as keys, list of metrics as corresponding values
+    In
     '''
-    # metrics_info = ['currentPrice','beta','marketCap']
-    metrics_info = ['regularMarketPrice','beta','marketCap','trailingPE','forwardPE']
-    stock_names = []
-    values_list = []
+    ticker = ticker.upper()
 
-    for ticker in tickers_tuple:
-        stock = yf.Ticker(ticker)
-        info = stock.info
-        
-        stock_names.append(info.get('shortName', ticker))
-        metric_list = [info.get(j) for j in metrics_info]
-        
-        try:
-            earnings_element = stock.calendar.get('Earnings Date')
-            earnings_date = str(earnings_element[0])
-        except Exception as e:
-            earnings_date = 'None'
-        
-        metric_list.append(earnings_date)
-        values_list.append(metric_list)
+    if ticker in price_cache:
+        print(f'Historical prices for {ticker} present in cache')
+        df = price_cache[ticker]
+        cutoff_date = df['date'].max() - timedelta(days=time_lookup[time_period]+1)
+        return df[df['date'] >= cutoff_date]
 
-    final_dict = dict(zip(stock_names, values_list))
+    print(f'Historical prices for {ticker} NOT present in cache')
+
+    #check cloud bucket
+    exists, mod_date = storage.check_file_in_bucket(bucket, 'prices', ticker, 'parquet')
+
+    if exists and mod_date >= time_minus_twelve:
+        print('File exists in cloud and has been updated in the past 12 hrs. Loading it now...')
+        #load from R2
+        df = storage.load_parquet(bucket, f'prices/{ticker}.parquet')
+        price_cache[ticker] = df
+        print(f'{ticker}.parquet pulled from cloud and added to cache')
+
+        cutoff_date = df['date'].max() - timedelta(days=time_lookup[time_period]+1)
+        return df[df['date'] >= cutoff_date]
+
+    elif not exists:
+        print(f'No parquet file exists for {ticker}. Fetching full price history now...')
+        df = tiingo.get_prices(ticker, start_date='1980-01-01')
+        price_cache[ticker] = df
+        storage.save_parquet(bucket, f'prices/{ticker}.parquet', df)
+        print(f'Full pricing history saved for {ticker}')
+
+        cutoff_date = df['date'].max() - timedelta(days=time_lookup[time_period]+1)
+        return df[df['date'] >= cutoff_date]
     
-    #market cap formatting
-    for i in final_dict.values():
-        if i[2] is not None and i[2] > 1000000000000:
-            i[2] = f'{round(i[2] / 1000000000000, 2)}T'
-        elif i[2] is not None and i[2] > 1000000000:
-            i[2] = f'{round(i[2] / 1000000000,2)}B'
-        elif i[2] is not None and i[2] > 1000000:
-            i[2] = f'{round(i[2] / 1000000,2)}M'
-        else:
-            pass
+    else:
+        print(f'File for {ticker} is out of date. Updating the price history now...', end='')
+        stored_daily_prices = storage.load_parquet(bucket, f'prices/{ticker}.parquet')
+        start_idx = len(stored_daily_prices) -1 #pre-concatenation, figuring out where to begin computing engineered features
+        latest_date = stored_daily_prices['date'].max()
 
-    return final_dict
+        new_daily_prices = tiingo.get_prices(ticker, start_date=latest_date+timedelta(hours=24))
+        new_latest_date = new_daily_prices['date'].max()
+        print(f'Prices were saved through {latest_date}...Now updated through {new_latest_date}')
 
+        updated_df = pd.concat([stored_daily_prices, new_daily_prices], ignore_index=True)
+        updated_df = tiingo.compute_appended_features(updated_df, start_idx)
+        price_cache[ticker] = updated_df
+        storage.save_parquet(bucket, f'prices/{ticker}.parquet', updated_df)
+        print(f'Fetched updated prices, appended dataframe, saved to cloud and cache')
 
-def get_time_series(df: pd.DataFrame, ticker: str, time_period: str):
-    '''
-        input: output from get_historical_data function, takes a single ticker and time period
-        output: plotly time series line chart for unique ticker/time period with Closing Prices, 
-                SMAs, EMAs, and Bollinger Bands
-    '''
-    df_flat = df.copy()
-    df_flat.columns = ['-'.join(col).strip() for col in df.columns.values]
-    fig = px.line(df_flat, x=df_flat.index, 
-                  y=[f'Close-{ticker}', f'SMA10-{ticker}', f'SMA50-{ticker}', f'SMA200-{ticker}',
-                    f'EMA10-{ticker}', f'EMA50-{ticker}', f'EMA200-{ticker}',
-                    f'UpperBB-{ticker}', f'LowerBB-{ticker}'],
-                  title=f'${ticker} Historical Pricing - {time_period}', 
-                  labels={'value':'Price/Share ($)', 'variable':f'${ticker} Metrics'})
-    
-    fig.update_layout(paper_bgcolor='rgb(184, 201, 223)')
-    
-    legend_names = ['Close', 'SMA10', 'SMA50', 'SMA200', 
-                    'EMA10', 'EMA50', 'EMA200', 'UpperBB', 'LowerBB']
-    for trace, name in zip(fig.data, legend_names):
-        trace.name = name
-        trace.legendgroup = name
-        trace.hovertemplate = trace.hovertemplate.replace(trace.name, name)
-
-    for i, trace in enumerate(fig.data):
-        trace.visible = True if i < 3 else "legendonly"
-
-    time_series_plot = plotly.io.to_html(fig, full_html=False)
-    return time_series_plot
+        cutoff_date = updated_df['date'].max() - timedelta(days=time_lookup[time_period]+1)
+        return updated_df[updated_df['date'] >= cutoff_date]
 
 
-if __name__ == '__main__':
-    pass
+# print('NVDA Run 1')
+# print(get_features('NVDA', 'stocks-r2'))
+# print(get_prices('IBM', 'stocks-r2', '1mo'))
+
+
