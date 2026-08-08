@@ -75,10 +75,15 @@
 
     
     {% if tickers %}
-        <div class="chosen_items">
-            <h4>Tickers: {{ tickers.upper() | replace(' ','') }}</h4>
-            <h4>Period: {{ time_period }}</h4>
-        </div>
+            <div class="chosen_items">
+                <!-- <h4>Tickers:</h4>
+                {% for ticker in tickers %} 
+                    <h4>{{ ticker | replace(' ','') }}</h4>
+                {% endfor %}
+                <h4>Period: {{ time_period }}</h4> -->
+                <h4>Tickers: {{ tickers | join(', ') }}</h4>
+                <h4>Period: {{ time_period }}</h4>
+            </div>
 
         <div class="resulting_content">
             <div class="correlation_container">
@@ -96,7 +101,6 @@
                     <thead>
                         <tr>
                             <th class="sticky_col"></th>
-                            <th>Price</th>
                             <th>Beta (5Y Mo.)</th>
                             <th>Mkt Cap</th>
                             <th>Trail. P/E</th>
@@ -105,33 +109,21 @@
                         </tr>
                     </thead>
                     <tbody>
-                        {% for key, value in metrics.items() %}
+                        {% for ticker, data in metrics.items() %}
                         <tr>
-                            <td class="sticky_col">{{ key }}</td>
-                            <td>${{ value[0] }}</td>
-                            <td>{{ value[1] }}</td>
-                            <td>${{ value[2] }}</td>
-
-                            {% if value[3] is not none %}
-                                <td>{{ value[3] | round(2) }}x</td>
-                            {% else %}
-                                <td>{{ value[3] }}</td>
-                            {% endif %}
-
-                            {% if value[4] is not none %}
-                                <td>{{ value[4] | round(2) }}x</td>
-                            {% else %}
-                                <td>{{ value[4] }}</td>
-                            {% endif %}
-
-                            <td>{{ value[5] }}</td>
+                            <td class="sticky_col">{{ data.companyName }}</td>
+                            <td>{{ data.beta }}</td>
+                            <td>${{ data.marketCap }}</td>
+                            <td>{% if data.peTTM  %} {{ data.peTTM | round(2) }}x{% else %}—{% endif %}</td>
+                            <td>{% if data.forwardPE %}{{ data.forwardPE | round(2) }}x{% else %}—{% endif %}</td>
+                            <td>{{ data.date }} - {{ data.hour }}</td>
                         </tr>
                         {% endfor %}
                     </tbody>
                 </table>
             </div>
         </div>
-
+ 
         <div class="time_series_container">
             <h2>Historical Pricing</h2>
             <h3>Price · SMA · EMA · Bollinger Bands</h3>
@@ -158,7 +150,6 @@
             <b>Heads up:</b> charts may not fully render if a large number of tickers are submitted
             at once. If you're doing close chart analysis, limit the batch size.
             <br><br>
-            Need a ticker? Browse symbols on <a href="https://finance.yahoo.com/markets/" target="_blank">Yahoo Finance</a>.
         </p>
     </div>
 

@@ -33,7 +33,7 @@ body {
 
 /* header */
 .header_container {
-    position: sticky;
+    /* position: sticky; */
     top: 0;
     z-index: 100;
     height: var(--header-h);
@@ -433,7 +433,52 @@ footer {
     line-height: 50px;
     letter-spacing: 0.04em;
 }
+/* new stuff */
+.metrics_grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 1rem;
+}
 
+.metric_card {
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.metric_card_header {
+    background: #1e293b;
+    color: #fff;
+    font-weight: 600;
+    font-size: 1rem;
+    padding: 0.6rem 1rem;
+    letter-spacing: 0.05em;
+}
+
+.metric_rows {
+    padding: 0.5rem 0;
+}
+
+.metric_row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.4rem 1rem;
+    font-size: 0.875rem;
+}
+
+.metric_row:nth-child(even) {
+    background: #f8fafc;
+}
+
+.metric_label {
+    color: #64748b;
+}
+
+.metric_value {
+    font-weight: 500;
+    color: #0f172a;
+}
 
 /* -----------------------Mobile--------------------------- */
 @media screen and (max-width: 700px) {
