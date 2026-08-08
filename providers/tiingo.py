@@ -33,7 +33,7 @@ def get_prices(ticker: str, start_date=None, end_date=None) -> dict:
 
 
 def compute_features(prices_json: dict) -> pd.DataFrame:
-    '''do the SMA, EMA, BB calcs here'''
+    
     df = pd.DataFrame(prices_json)
 
     #simple moving average
