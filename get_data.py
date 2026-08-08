@@ -26,10 +26,9 @@ time_minus_twelve = (datetime.now(timezone.utc) - timedelta(hours=12))
 
 def get_features(ticker: str, bucket: str) -> dict:
 
-    ticker = ticker.upper()
     if ticker in feature_cache: #if in cache, return contents
         print(f'Features for {ticker} present in cache')
-        return feature_cache[ticker]
+        return {ticker: feature_cache[ticker]}
     
     print(f'Features for {ticker} NOT present in cache')
 
