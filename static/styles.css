@@ -221,18 +221,31 @@ hr {
     border-bottom: 1px solid var(--border);
     display: flex;
     justify-content: center;
-    gap: 32px;
+    gap: 20px;
     flex-wrap: wrap;
+    align-items: center;
 }
 
-.chosen_items h4 {
+.stock {
+    white-space: nowrap;
+}
+
+.positive {
+    color: green;
+}
+
+.negative {
+    color: red;
+}
+
+/* .chosen_items h4 {
     font-family: 'JetBrains Mono', monospace;
     font-size: 13px;
     font-weight: 500;
     color: var(--accent);
     letter-spacing: 0.06em;
     text-transform: uppercase;
-}
+} */
 
 
 /* results */
@@ -319,6 +332,7 @@ hr {
 
 .sticky_col {
     position: sticky;
+    width: 125px;
     left: 0;
     z-index: 1;
     background: var(--surface-raised);
@@ -327,7 +341,8 @@ hr {
     font-size: 12px;
     letter-spacing: 0.05em;
     border-right: 1px solid var(--border);
-    white-space: nowrap;
+    white-space: normal;
+    overflow-wrap: break-word;
 }
 
 .info_table thead th.sticky_col {

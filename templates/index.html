@@ -76,13 +76,20 @@
     
     {% if tickers %}
             <div class="chosen_items">
-                <!-- <h4>Tickers:</h4>
-                {% for ticker in tickers %} 
-                    <h4>{{ ticker | replace(' ','') }}</h4>
+                <!-- <h4>Tickers:</h4> -->
+                {% for ticker, data in metrics.items() %} 
+                    <span class="stock">
+                        <strong>{{ ticker }}</strong>
+
+                        <span class="{{ 'positive' if data.change >= 0 else 'negative' }}">
+                            {{ '%+.2f'|format(data.change) }}
+                            ({{ '%+.2f'|format(data.percent_change) }}%)
+                        </span>
+                    </span>
                 {% endfor %}
+                <!-- <h4>Period: {{ time_period }}</h4> -->
+                <!-- <h4>Tickers: {{ tickers | join(', ') }}</h4>
                 <h4>Period: {{ time_period }}</h4> -->
-                <h4>Tickers: {{ tickers | join(', ') }}</h4>
-                <h4>Period: {{ time_period }}</h4>
             </div>
 
         <div class="resulting_content">
@@ -116,7 +123,7 @@
                             <td>${{ data.marketCap }}</td>
                             <td>{% if data.peTTM  %} {{ data.peTTM | round(2) }}x{% else %}—{% endif %}</td>
                             <td>{% if data.forwardPE %}{{ data.forwardPE | round(2) }}x{% else %}—{% endif %}</td>
-                            <td>{{ data.date }} - {{ data.hour }}</td>
+                            <td>{{ data.date }} {{ data.hour }}</td>
                         </tr>
                         {% endfor %}
                     </tbody>
