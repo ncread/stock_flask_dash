@@ -49,7 +49,8 @@ def get_features(ticker: str, bucket: str) -> dict:
         fh_metrics = fh.get_finnhub_metrics(ticker)
         fh_earnings = fh.get_finnhub_earnings(ticker)
         fmp_metrics = fmp.get_fmp_profile(ticker)
-        fresh_metrics = fh_metrics | fh_earnings | fmp_metrics
+        fh_price = fh.get_finnhub_price(ticker)
+        fresh_metrics = fh_metrics | fh_price | fh_earnings | fmp_metrics
         print(f'{ticker} data successfully obtained')
         # s3.put_object(Bucket=bucket, Key=f'features/{ticker}.json', Body=json.dumps(fresh_metrics), ContentType='application/json')
         storage.save_json(bucket, f'features/{ticker}.json', json.dumps(fresh_metrics))
