@@ -80,6 +80,7 @@
                 {% for ticker, data in metrics.items() %} 
                     <span class="stock">
                         <strong>{{ ticker }}</strong>
+                        <span>{{ data.price }}</span>
 
                         <span class="{{ 'positive' if data.change >= 0 else 'negative' }}">
                             {{ '%+.2f'|format(data.change) }}
