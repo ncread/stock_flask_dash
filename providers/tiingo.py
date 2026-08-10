@@ -12,7 +12,7 @@ TIINGO_API_KEY = os.getenv('TIINGO_API_KEY')
 session = requests.Session()
 
 
-def get_prices(ticker: str, start_date=None, end_date=None) -> dict:
+def get_prices(ticker: str, start_date=None, end_date=None) -> pd.DataFrame:
     url = f'https://api.tiingo.com/tiingo/daily/{ticker}/prices'
     params = {'token': TIINGO_API_KEY,
               'format': 'json'}
@@ -23,38 +23,40 @@ def get_prices(ticker: str, start_date=None, end_date=None) -> dict:
         params['endDate'] = end_date
     
     response = session.get(url, params=params)
-    df = compute_features(response.json())
+    df = pd.DataFrame(response.json())
 
-    cols = ['date','adjClose','adjHigh','adjLow','adjOpen','adjVolume','SMA10','SMA50','SMA200','EMA10','EMA50','EMA200','UpperBB','LowerBB']
-
+    if df.empty:
+        return df
+    
+    cols = ['date','adjClose','adjHigh','adjLow','adjOpen','adjVolume']
     df = df[cols]
 
-    return df
-
-
-def compute_features(prices_json: dict) -> pd.DataFrame:
-    
-    df = pd.DataFrame(prices_json)
-
-    #simple moving average
-    df['SMA10'] = df['adjClose'].rolling(window=10).mean()
-    df['SMA50'] = df['adjClose'].rolling(window=50).mean()
-    df['SMA200'] = df['adjClose'].rolling(window=200).mean()
-    #exponential moving average (more weight to recent prices)
-    df['EMA10'] = df['adjClose'].ewm(span=10).mean()
-    df['EMA50'] = df['adjClose'].ewm(span=50).mean()
-    df['EMA200'] = df['adjClose'].ewm(span=200).mean()
-    #Bollinger bands: 2 std devs above&below 20 day SMA
-    sma20 = df['adjClose'].rolling(window=20).mean()
-    std20 = df['adjClose'].rolling(window=20).std()
-    df['UpperBB'] = sma20 + (std20 * 2)
-    df['LowerBB'] = sma20 - (std20 * 2)
-
     df['date'] = pd.to_datetime(df['date']).dt.date
+
     return df
 
 
-def compute_appended_features(df: pd.DataFrame, start_idx: int) -> pd.DataFrame:
+# def compute_features(df: pd.DataFrame) -> pd.DataFrame:
+
+#     #simple moving average
+#     df['SMA10'] = df['adjClose'].rolling(window=10).mean()
+#     df['SMA50'] = df['adjClose'].rolling(window=50).mean()
+#     df['SMA200'] = df['adjClose'].rolling(window=200).mean()
+#     #exponential moving average (more weight to recent prices)
+#     df['EMA10'] = df['adjClose'].ewm(span=10).mean()
+#     df['EMA50'] = df['adjClose'].ewm(span=50).mean()
+#     df['EMA200'] = df['adjClose'].ewm(span=200).mean()
+#     #Bollinger bands: 2 std devs above&below 20 day SMA
+#     sma20 = df['adjClose'].rolling(window=20).mean()
+#     std20 = df['adjClose'].rolling(window=20).std()
+#     df['UpperBB'] = sma20 + (std20 * 2)
+#     df['LowerBB'] = sma20 - (std20 * 2)
+
+#     return df
+
+
+def compute_features(df: pd.DataFrame, start_idx=0) -> pd.DataFrame:
+
     sma10  = df['adjClose'].rolling(window=10).mean()
     sma50  = df['adjClose'].rolling(window=50).mean()
     sma200 = df['adjClose'].rolling(window=200).mean()
