@@ -88,7 +88,8 @@ def get_prices(ticker: str, bucket: str, time_period: str):
 
     elif not exists:
         print(f'No parquet file exists for {ticker}. Fetching full price history now...')
-        df = tiingo.get_prices(ticker, start_date='1980-01-01')
+        df_raw = tiingo.get_prices(ticker, start_date='1980-01-01')
+        df = tiingo.compute_features(df_raw)
         price_cache[ticker] = df
         storage.save_parquet(bucket, f'prices/{ticker}.parquet', df)
         print(f'Full pricing history saved for {ticker}')
@@ -96,28 +97,29 @@ def get_prices(ticker: str, bucket: str, time_period: str):
         cutoff_date = df['date'].max() - timedelta(days=time_lookup[time_period]+1)
         return df[df['date'] >= cutoff_date]
     
-    else:
+    else: #file has not been updated in the past 12 hrs
         print(f'File for {ticker} is out of date. Updating the price history now...', end='')
         stored_daily_prices = storage.load_parquet(bucket, f'prices/{ticker}.parquet')
         start_idx = len(stored_daily_prices) -1 #pre-concatenation, figuring out where to begin computing engineered features
         latest_date = stored_daily_prices['date'].max()
+        # return latest_date + timedelta(hours=24)
+        new_daily_prices = tiingo.get_prices(ticker, start_date=latest_date+timedelta(hours=24)) 
 
-        new_daily_prices = tiingo.get_prices(ticker, start_date=latest_date+timedelta(hours=24))
+        if new_daily_prices.empty: #still no new pricing info, so just return what was already present
+            print(f'No new available prices for {ticker}. Returning the stored data...')
+            price_cache[ticker] = stored_daily_prices
+            cutoff_date = stored_daily_prices['date'].max() - timedelta(days=time_lookup[time_period]+1)
+            return stored_daily_prices[stored_daily_prices['date'] >= cutoff_date]
+
         new_latest_date = new_daily_prices['date'].max()
         print(f'Prices were saved through {latest_date}...Now updated through {new_latest_date}')
 
         updated_df = pd.concat([stored_daily_prices, new_daily_prices], ignore_index=True)
-        updated_df = tiingo.compute_appended_features(updated_df, start_idx)
+        updated_df = tiingo.compute_features(updated_df, start_idx)
+
         price_cache[ticker] = updated_df
         storage.save_parquet(bucket, f'prices/{ticker}.parquet', updated_df)
         print(f'Fetched updated prices, appended dataframe, saved to cloud and cache')
 
         cutoff_date = updated_df['date'].max() - timedelta(days=time_lookup[time_period]+1)
         return updated_df[updated_df['date'] >= cutoff_date]
-
-
-# print('NVDA Run 1')
-# print(get_features('NVDA', 'stocks-r2'))
-# print(get_prices('IBM', 'stocks-r2', '1mo'))
-
-

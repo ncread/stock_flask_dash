@@ -19,8 +19,6 @@ def combine_historical_data(tickers: list, time_period: str) -> pd.DataFrame:
         df = get_data.get_prices(ticker, bucket, time_period)
         df = df.set_index('date')
         df.columns = pd.MultiIndex.from_product([df.columns, [ticker]])
-        # create the multiindex here?
-        #df_list.append?
         df_list.append(df)
 
     return pd.concat(df_list, axis=1).sort_index(axis=1)
@@ -32,7 +30,6 @@ def combine_metrics(tickers: list) -> dict:
         combined.update(get_data.get_features(ticker, bucket))
 
     return combined
-
 
 
 def get_corr_plot(df: pd.DataFrame, time_period: str):
@@ -75,13 +72,3 @@ def get_time_series(df: pd.DataFrame, ticker: str, time_period: str):
 
     time_series_plot = plotly.io.to_html(fig, full_html=False)
     return time_series_plot
-
-
-# a = get_historical_data(['NVDA','AAPL','MSFT'], '1mo')
-# print(gen_corr_plot(a, '1mo'))
-
-# a = get_historical_data(['NVDA', 'AAPL'], '5d')
-
-# a.columns = ['-'.join(col).strip() for col in a.columns.values]
-
-# print(combine_metrics(['NVDA','AAPL','MSFT']))

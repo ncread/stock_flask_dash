@@ -42,7 +42,6 @@ def index():
                     time.sleep(2)
                     break
                 except Exception as e:
-                    # corr_chart_html = f'<p>Error fetching data from Yahoo Finance. Please try again.</p>'
                     corr_chart_html = f'{e}'
                     metrics = {}
                     time.sleep(2)
@@ -53,4 +52,4 @@ def index():
                            time_series_list=time_series_list)
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run()
