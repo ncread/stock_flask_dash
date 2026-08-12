@@ -30,10 +30,11 @@ def index():
 
             tickers = [t.strip().upper() for t in tickers_response.split(",") if t.strip()]
 
-            for _ in range(2):
+            for attempt in range(2):
                 try:
                     df, missing_price = web_content.combine_historical_data(tickers, time_period)
                     corr_chart_html = web_content.get_corr_plot(df, time_period)
+                    break
                 except Exception as e:
                     print(f'Historical data error: {e}')
                     df = None
@@ -48,8 +49,10 @@ def index():
                         except Exception as e:
                             print(f'Historical data error: {e}')
 
+            for attempt in range(2):
                 try:
                     metrics, missing_feature = web_content.combine_metrics(tickers)
+                    break
                 except Exception as e:
                     print(f'Metrics error: {e}')
                     metrics = {}
@@ -66,4 +69,4 @@ def index():
                            time_series_list=time_series_list, missing=missing)
 
 if __name__ == '__main__':
-    app.run(debug = True)
+    app.run()
