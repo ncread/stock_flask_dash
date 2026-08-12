@@ -8,28 +8,40 @@ import get_data
 bucket = 'stocks-r2'
 
 
-def combine_historical_data(tickers: list, time_period: str) -> pd.DataFrame:
+def combine_historical_data(tickers: list, time_period: str) -> tuple[pd.DataFrame, set]:
     '''
         input: list of tickers inputted by user and specified time period
         output: dataframe constructed from concatenated individual ticker dataframes
     '''
 
     df_list = []
+    missing = set()
     for ticker in tickers:
-        df = get_data.get_prices(ticker, bucket, time_period)
-        df = df.set_index('date')
-        df.columns = pd.MultiIndex.from_product([df.columns, [ticker]])
-        df_list.append(df)
+        try:
+            df = get_data.get_prices(ticker, bucket, time_period)
+            df = df.set_index('date')
+            df.columns = pd.MultiIndex.from_product([df.columns, [ticker]])
+            df_list.append(df)
+        except:
+            print(f'Failed to fetch price history for {ticker}')
+            missing.add(ticker)
+            continue
 
-    return pd.concat(df_list, axis=1).sort_index(axis=1)
+    return pd.concat(df_list, axis=1).sort_index(axis=1), missing
 
 
-def combine_metrics(tickers: list) -> dict:
+def combine_metrics(tickers: list) -> tuple[dict, set]:
     combined = {}
+    missing = set()
     for ticker in tickers:
-        combined.update(get_data.get_features(ticker, bucket))
+        try:
+            combined[ticker] = get_data.get_features(ticker, bucket)
+        except Exception as e:
+            print(f'Error fetching metrics for {ticker}: {e}')
+            missing.add(ticker)
+            continue
 
-    return combined
+    return combined, missing
 
 
 def get_corr_plot(df: pd.DataFrame, time_period: str):

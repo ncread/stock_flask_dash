@@ -28,7 +28,7 @@ def get_features(ticker: str, bucket: str) -> dict:
 
     if ticker in feature_cache: #if in cache, return contents
         print(f'Features for {ticker} present in cache')
-        return {ticker: feature_cache[ticker]}
+        return feature_cache[ticker]
     
     print(f'Features for {ticker} NOT present in cache')
 
@@ -36,16 +36,16 @@ def get_features(ticker: str, bucket: str) -> dict:
     exists, mod_date = storage.check_file_in_bucket(bucket, 'features', ticker, 'json')
 
     if exists and mod_date >= yesterday:
-        print('File exists in cloud and has been updated in the past 24 hrs. Loading it now...')
+        print('JSON file exists in cloud and has been updated in the past 24 hrs. Loading it now...')
         #load from R2
         # response = s3.get_object(Bucket=bucket, Key=f'features/{ticker}.json')
         # metrics = json.loads(response['Body'].read().decode('utf-8'))
         metrics = storage.load_json(bucket, f'features/{ticker}.json')
         feature_cache[ticker] = metrics
         print(f'{ticker}.json pulled from cloud and added to cache')
-        return {ticker: metrics}
+        return metrics
     else:
-        print(f'File is either outdated or not present. Fetching new features data for {ticker}...')
+        print(f'JSON file is either outdated or not present. Fetching new features data for {ticker}...')
         fh_metrics = fh.get_finnhub_metrics(ticker)
         fh_earnings = fh.get_finnhub_earnings(ticker)
         fmp_metrics = fmp.get_fmp_profile(ticker)
@@ -56,7 +56,7 @@ def get_features(ticker: str, bucket: str) -> dict:
         storage.save_json(bucket, f'features/{ticker}.json', json.dumps(fresh_metrics))
         feature_cache[ticker] = fresh_metrics
         print(f'Features for {ticker} successfully saved to cloud and cache')
-        return {ticker: fresh_metrics}
+        return fresh_metrics
 
 
 def get_prices(ticker: str, bucket: str, time_period: str):
@@ -77,7 +77,7 @@ def get_prices(ticker: str, bucket: str, time_period: str):
     exists, mod_date = storage.check_file_in_bucket(bucket, 'prices', ticker, 'parquet')
 
     if exists and mod_date >= time_minus_twelve:
-        print('File exists in cloud and has been updated in the past 12 hrs. Loading it now...')
+        print('Parquet file exists in cloud and has been updated in the past 12 hrs. Loading it now...')
         #load from R2
         df = storage.load_parquet(bucket, f'prices/{ticker}.parquet')
         price_cache[ticker] = df
@@ -98,7 +98,7 @@ def get_prices(ticker: str, bucket: str, time_period: str):
         return df[df['date'] >= cutoff_date]
     
     else: #file has not been updated in the past 12 hrs
-        print(f'File for {ticker} is out of date. Updating the price history now...', end='')
+        print(f'Parquet file for {ticker} is out of date. Updating the price history now...', end='')
         stored_daily_prices = storage.load_parquet(bucket, f'prices/{ticker}.parquet')
         start_idx = len(stored_daily_prices) -1 #pre-concatenation, figuring out where to begin computing engineered features
         latest_date = stored_daily_prices['date'].max()
@@ -123,3 +123,5 @@ def get_prices(ticker: str, bucket: str, time_period: str):
 
         cutoff_date = updated_df['date'].max() - timedelta(days=time_lookup[time_period]+1)
         return updated_df[updated_df['date'] >= cutoff_date]
+
+# print(get_features('XYZ', 'stocks-r2'))
