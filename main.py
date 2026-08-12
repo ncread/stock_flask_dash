@@ -41,13 +41,13 @@ def index():
                     corr_chart_html = None
                     missing_price = None
 
-                if df is not None:
-                    for ticker in tickers:
-                        try:
-                            chart = web_content.get_time_series(df, ticker, time_period)
-                            time_series_list.append(chart)
-                        except Exception as e:
-                            print(f'Historical data error: {e}')
+            if df is not None:
+                for ticker in tickers:
+                    try:
+                        chart = web_content.get_time_series(df, ticker, time_period)
+                        time_series_list.append(chart)
+                    except Exception as e:
+                        print(f'Historical data error: {e}')
 
             for attempt in range(2):
                 try:
