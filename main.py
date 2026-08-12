@@ -18,6 +18,7 @@ def index():
     tickers = ''
     hist_fig_html = ''
     metrics = {}
+    time_series_list = []
     time_period = '6mo'
 
     if request.method == 'POST':
@@ -38,7 +39,6 @@ def index():
                     corr_chart_html = None
                     missing_price = None
 
-                time_series_list = []
                 if df is not None:
                     for ticker in tickers:
                         try:
