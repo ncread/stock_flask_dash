@@ -19,7 +19,6 @@ def index():
     hist_fig_html = ''
     metrics = {}
     time_period = '6mo'
-    time_series_list = []
 
     if request.method == 'POST':
 
@@ -31,25 +30,39 @@ def index():
 
             for _ in range(2):
                 try:
-                    df = web_content.combine_historical_data(tickers, time_period)
-
-                    metrics = web_content.combine_metrics(tickers)
-
+                    df, missing_price = web_content.combine_historical_data(tickers, time_period)
                     corr_chart_html = web_content.get_corr_plot(df, time_period)
-                    
-                    for ticker in tickers:
-                        time_series_list.append(web_content.get_time_series(df, ticker, time_period))
-                    time.sleep(2)
-                    break
                 except Exception as e:
-                    corr_chart_html = f'{e}'
+                    print(f'Historical data error: {e}')
+                    df = None
+                    corr_chart_html = None
+                    missing_price = None
+
+                time_series_list = []
+                if df is not None:
+                    for ticker in tickers:
+                        try:
+                            chart = web_content.get_time_series(df, ticker, time_period)
+                            time_series_list.append(chart)
+                        except Exception as e:
+                            print(f'Historical data error: {e}')
+
+                try:
+                    metrics, missing_feature = web_content.combine_metrics(tickers)
+                except Exception as e:
+                    print(f'Metrics error: {e}')
                     metrics = {}
-                    time.sleep(2)
-    
+                    missing_feature = None
+
+            try:
+                missing = missing_feature | missing_price
+            except Exception as e:
+                missing = None
+                
     return render_template('index.html', corr_chart=corr_chart_html, 
                            hist_fig=hist_fig_html, tickers=tickers, 
                            time_period=time_period, metrics=metrics,
-                           time_series_list=time_series_list)
+                           time_series_list=time_series_list, missing=missing)
 
 if __name__ == '__main__':
-    app.run()
+    app.run(debug = True)
