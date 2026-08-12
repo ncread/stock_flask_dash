@@ -75,23 +75,25 @@
 
     
     {% if tickers %}
-            <div class="chosen_items">
-                <!-- <h4>Tickers:</h4> -->
-                {% for ticker, data in metrics.items() %} 
-                    <span class="stock">
-                        <strong>{{ ticker }}</strong>
-                        <span>{{ data.price }}</span>
-
+        <div class="chosen_items">
+            {% for ticker, data in metrics.items() %} 
+                <span class="stock">
+                    <strong>{{ ticker }}</strong>
+                    {% if data.change is not none %}
+                        <span>${{ data.price }}</span>
                         <span class="{{ 'positive' if data.change >= 0 else 'negative' }}">
-                            {{ '%+.2f'|format(data.change) }}
+                            ${{ '%+.2f'|format(data.change) }}
                             ({{ '%+.2f'|format(data.percent_change) }}%)
                         </span>
-                    </span>
-                {% endfor %}
-                <!-- <h4>Period: {{ time_period }}</h4> -->
-                <!-- <h4>Tickers: {{ tickers | join(', ') }}</h4>
-                <h4>Period: {{ time_period }}</h4> -->
-            </div>
+                    {% else %}
+                        <span>Data unavailable</span>
+                    {% endif %}
+                </span>
+            {% endfor %}
+            {% if missing %}
+                <span class="missing">check input: {{missing}}</span>
+            {% endif %}
+        </div>
 
         <div class="resulting_content">
             <div class="correlation_container">
@@ -149,14 +151,11 @@
             After inserting <i>N</i> tickers and choosing a time period, this app displays a
             <b>correlation matrix (<i>N×N</i>)</b> showing how closely each asset's returns moved together
             over that window. A table of <b>relevant metrics</b> is included alongside —
-            share price, beta, market cap, and upcoming earnings date.
+            beta, market cap, trailing/forward price-to-earnings ratios, and upcoming earnings date.
             <br><br>
             <b>Interactive time series charts</b> for each ticker show historical price along with
             simple and exponential moving averages and Bollinger Bands. On mobile,
-            landscape mode makes these easier to work with.
-            <br><br>
-            <b>Heads up:</b> charts may not fully render if a large number of tickers are submitted
-            at once. If you're doing close chart analysis, limit the batch size.
+            landscape mode makes these easier to visualize and manipulate.
             <br><br>
         </p>
     </div>

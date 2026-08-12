@@ -238,14 +238,11 @@ hr {
     color: red;
 }
 
-/* .chosen_items h4 {
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 13px;
-    font-weight: 500;
-    color: var(--accent);
-    letter-spacing: 0.06em;
-    text-transform: uppercase;
-} */
+.missing {
+    display: block;
+    color: var(--text-secondary);
+    font-size: 10px;
+}
 
 
 /* results */
