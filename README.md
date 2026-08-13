@@ -92,3 +92,24 @@ flowchart TD
     YY --> Z
     Z --> AA[User]
 ```
+
+
+## Definitions
+**Beta ($\beta$)** : a metric that indicates a stock's volatility of returns relative to the rest of the market (S&P 500 typically). The higher the $\beta$, the greater the risk, but also the greater the possible return. Another way of thinking about $\beta$ is the sensitivity of a stock due to market changes. High $\beta$, more sensitive and unstable. Low $\beta$, less sensitive and less risky. A $\beta$ of 1, the stock's price activity correlates with the broader market. The formula to compute $\beta$ is shown below:
+
+$$\beta = \frac{covariance(R_s, R_m)}{variance(R_m)}$$
+
+$R_s$: return on the individual stock
+
+$R_m$: return on the overall market
+
+---
+**Simple Moving Average (SMA) & Exponential Moving Average (EMA)**: methods to smooth historical price movements to identify trends. If computing the 10 day SMA and EMA of a stock, the SMA calculation simply involves summing up the stock's prices for the last 10 days and dividing by 10. It is, by definition, a *simple* average. EMA weighs more recent prices more heavily, so yesterday's price has more of an impact on the EMA than the price 10 days ago. Hence, the EMA is more reactive to the latest price changes and is typically a more attractive metric to traders than the SMA. Common SMA and EMA time periods include 10-day, 20-day, 50-day, and 200-day.
+
+---
+**Bollinger Bands (BB)**: tool that helps to gauge whether a stock is overvalued or undervalued. The upper and lower BBs are displayed on a price chart and represent the values 2 standard deviations above and 2 standard deviations below the 20-day SMA. The upper and lower bands tend to widen when a stock's price is more volatile and contract when the price is more stable. When comparing a stock's current price to the BBs, if the price approaches the upper BB it *may* be overbought. Subsequently the stock *may* be oversold if it approaches the lower BB, potentially signifying a good time to purchase.
+
+
+## Disclaimer
+Everything on this website is not considered financial advice. Trade at your own risk.
+
