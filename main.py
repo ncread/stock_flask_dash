@@ -29,6 +29,7 @@ def index():
             time_period = request.form['radio_option']
 
             tickers = [t.strip().upper() for t in tickers_response.split(",") if t.strip()]
+            tickers = list(dict.fromkeys(tickers)) #remove duplicates
 
             for attempt in range(2):
                 try:
