@@ -26,9 +26,12 @@ time_minus_twelve = (datetime.now(timezone.utc) - timedelta(hours=12))
 
 def get_features(ticker: str, bucket: str) -> dict:
 
+    fh_price = fh.get_finnhub_price(ticker) #grab updated price regardless of cache/cloud situation
+
     if ticker in feature_cache: #if in cache, return contents
         print(f'Features for {ticker} present in cache')
-        return feature_cache[ticker]
+        all_features = feature_cache[ticker] | fh_price
+        return all_features
     
     print(f'Features for {ticker} NOT present in cache')
 
@@ -38,30 +41,30 @@ def get_features(ticker: str, bucket: str) -> dict:
     if exists and mod_date >= yesterday:
         print('JSON file exists in cloud and has been updated in the past 24 hrs. Loading it now...')
         #load from R2
-        # response = s3.get_object(Bucket=bucket, Key=f'features/{ticker}.json')
-        # metrics = json.loads(response['Body'].read().decode('utf-8'))
         metrics = storage.load_json(bucket, f'features/{ticker}.json')
         feature_cache[ticker] = metrics
+        all_features = metrics | fh_price
         print(f'{ticker}.json pulled from cloud and added to cache')
-        return metrics
+        return all_features
+    
     else:
         print(f'JSON file is either outdated or not present. Fetching new features data for {ticker}...')
         fh_metrics = fh.get_finnhub_metrics(ticker)
         fh_earnings = fh.get_finnhub_earnings(ticker)
         fmp_metrics = fmp.get_fmp_profile(ticker)
-        fh_price = fh.get_finnhub_price(ticker)
-        fresh_metrics = fh_metrics | fh_price | fh_earnings | fmp_metrics
+        fresh_metrics = fh_metrics | fh_earnings | fmp_metrics
         print(f'{ticker} data successfully obtained')
-        # s3.put_object(Bucket=bucket, Key=f'features/{ticker}.json', Body=json.dumps(fresh_metrics), ContentType='application/json')
         storage.save_json(bucket, f'features/{ticker}.json', json.dumps(fresh_metrics))
         feature_cache[ticker] = fresh_metrics
+        all_features = fresh_metrics | fh_price
         print(f'Features for {ticker} successfully saved to cloud and cache')
-        return fresh_metrics
+        return all_features
 
 
-def get_prices(ticker: str, bucket: str, time_period: str):
+def get_prices(ticker: str, bucket: str, time_period: str) -> pd.DataFrame:
     '''
-    In
+    inputs: ticker, bucket, time period
+    output: dataframe with historical pricing specified by the time period input
     '''
     ticker = ticker.upper()
 
