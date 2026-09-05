@@ -118,6 +118,8 @@ def get_prices(ticker: str, bucket: str, time_period: str) -> pd.DataFrame:
         print(f'Prices were saved through {latest_date}...Now updated through {new_latest_date}')
 
         updated_df = pd.concat([stored_daily_prices, new_daily_prices], ignore_index=True)
+        updated_df = updated_df.drop_duplicates(subset=['date'], keep='last')
+        
         updated_df = tiingo.compute_features(updated_df, start_idx)
 
         price_cache[ticker] = updated_df

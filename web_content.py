@@ -61,6 +61,12 @@ def get_corr_plot(df: pd.DataFrame, time_period: str):
 
 def get_time_series(df: pd.DataFrame, ticker: str, time_period: str):
     df_flat = df.copy()
+
+    dupes = df_flat.index.duplicated().sum()
+    if dupes:
+        print(f'WARNING: {dupes} duplicate index values found for {ticker}')
+        df_flat = df_flat[~df_flat.index.duplicated(keep='last')]
+        
     df_flat.columns = ['-'.join(col).strip() for col in df.columns.values]
 
     fig = px.line(df_flat, x=df_flat.index, 
