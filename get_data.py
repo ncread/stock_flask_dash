@@ -20,11 +20,9 @@ time_lookup = {'5d': 5,
                '5y': 1825, 
                '10y': 3650}
 
-yesterday = (datetime.now(timezone.utc) - timedelta(hours=24))
-time_minus_twelve = (datetime.now(timezone.utc) - timedelta(hours=12))
-
 
 def get_features(ticker: str, bucket: str) -> dict:
+    yesterday = (datetime.now(timezone.utc) - timedelta(hours=24))
 
     fh_price = fh.get_finnhub_price(ticker) #grab updated price regardless of cache/cloud situation
 
@@ -66,6 +64,8 @@ def get_prices(ticker: str, bucket: str, time_period: str) -> pd.DataFrame:
     inputs: ticker, bucket, time period
     output: dataframe with historical pricing specified by the time period input
     '''
+    time_minus_twelve = (datetime.now(timezone.utc) - timedelta(hours=12))
+
     ticker = ticker.upper()
 
     if ticker in price_cache:
